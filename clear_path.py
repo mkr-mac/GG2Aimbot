@@ -9,7 +9,6 @@ def clear_path(x1, y1, x2, y2, screen):
 			xpix = (m*(y1-y))+x1
 			r, g ,b = pict.getpixel((math.floor(xpix), y))
 			if (r == 0 and g == 0 and b == 0):
-				print("done")
 				return False
 		return True
 	else:
@@ -17,8 +16,7 @@ def clear_path(x1, y1, x2, y2, screen):
 			ypix = (m*(x1-x))+y1
 			r, g ,b = pict.getpixel((x, math.floor(ypix)))
 			if (r == 0 and g == 0 and b == 0):
-				print("done")
 				return False
 		return True
 
-scan(412, 200, 600, 600, "boom_headshot.png")
+clear_path(412, 440, 600, 600, "boom_headshot.png")
