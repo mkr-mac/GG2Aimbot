@@ -8,7 +8,7 @@ import win32api, win32con, time
 from os import listdir
 from os.path import isfile, join
 from click import click
-PYGAME_DEBUG = True
+PYGAME_DEBUG = False
 GAME_W = 790
 GAME_H = 670
 
@@ -21,14 +21,16 @@ if PYGAME_DEBUG:
 
 red = [f for f in listdir("Class_Sprites/RedSig") if isfile(join("Class_Sprites/RedSig", f))]
 targets = []
+names = []
 
 for f in red:
     targets.append(cv2.imread("Class_Sprites/RedSig/"+f,1))
+    names.append(f)
 
 ptr = 0
 
 while True:
-    ptr += 1
+    ptr = ptr + 1
 
     ptr = ptr % len(targets)
     capture = np.asarray(screen.grab([0,0,GAME_W,GAME_H]))
@@ -39,13 +41,13 @@ while True:
     res = cv2.matchTemplate(capture,targets[ptr],cv2.TM_SQDIFF)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
 
-    print min_val
-    print (min_val < 200000.0)
     #2 mil is a good thresh
-    if (min_val < 200000.0) and (win32api.GetAsyncKeyState(ord('H')) != 0):
+    if (min_val < 1000.0) and (win32api.GetAsyncKeyState(ord('H')) != 0):
         # Shoot it!
         click(min_loc[0]+(targets[ptr].shape[1]/2),min_loc[1]+(targets[ptr].shape[0]/2))
-        ptr = ptr - 1
+        ptr = ptr  = ptr - 1
+        print names[ptr]
+        print min_val
 
 
     if PYGAME_DEBUG:
