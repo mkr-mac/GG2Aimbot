@@ -4,6 +4,7 @@ import sys, pygame
 import pygame.surfarray as surf
 import cv2
 import os
+import win32api, win32con, time
 from os import listdir
 from os.path import isfile, join
 from click import click
@@ -24,20 +25,27 @@ targets = []
 for f in red:
     targets.append(cv2.imread("Class_Sprites/RedSig/"+f,1))
 
-while True:
+ptr = 0
 
+while True:
+    ptr += 1
+
+    ptr = ptr % len(targets)
     capture = np.asarray(screen.grab([0,0,GAME_W,GAME_H]))
 
     b,g,r = cv2.split(capture)       # get b,g,r
     capture = cv2.merge([r,g,b])     # switch it to rgb
 
-    res = cv2.matchTemplate(capture,targets[0],cv2.TM_SQDIFF)
+    res = cv2.matchTemplate(capture,targets[ptr],cv2.TM_SQDIFF)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
 
+    print min_val
+    print (min_val < 200000.0)
     #2 mil is a good thresh
-    if min_val < 2000000:
+    if (min_val < 200000.0) and (win32api.GetAsyncKeyState(ord('H')) != 0):
         # Shoot it!
-        click(min_loc[0],min_loc[1])
+        click(min_loc[0]+(targets[ptr].shape[1]/2),min_loc[1]+(targets[ptr].shape[0]/2))
+        ptr = ptr - 1
 
 
     if PYGAME_DEBUG:
