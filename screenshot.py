@@ -5,22 +5,28 @@ import numpy
 import struct
 import cv2
 
-class GGScreen:
-	def __init__(self,screen_w,screen_h):
-		hwnd = win32gui.FindWindow(None, "Sublime Text 2")
-		wDC = win32gui.GetWindowDC(hwnd)
+class Window:
+	# Loads in the active window and prepares it for screenshotting
+	def __init__(self):
+		self.handle = win32gui.GetForegroundWindow()
+
+		self.screen_w = self.get_rect()[2]
+		self.screen_h = self.get_rect()[3]
+
+		wDC = win32gui.GetWindowDC(self.handle)
 		self.dcObj = win32ui.CreateDCFromHandle(wDC)
 		self.cDC = self.dcObj.CreateCompatibleDC()
 		self.dataBitMap = win32ui.CreateBitmap()
-		self.dataBitMap.CreateCompatibleBitmap(self.dcObj,screen_w,screen_h)
+		self.dataBitMap.CreateCompatibleBitmap(self.dcObj,self.screen_w,self.screen_h)
 		self.cDC.SelectObject(self.dataBitMap)
-		self.screen_w, self.screen_h = screen_w, screen_h
 
-	# This version is faster, and it also gets the window no matter where it is on the screen, and only the window we need.
 	def screenshot(self):
 		self.cDC.BitBlt((0,0), (self.screen_w,self.screen_h), self.dcObj, (0,0), win32con.SRCCOPY)
 		self.dataBitMap.SaveBitmapFile(self.cDC, 'temp')
-		cv2.imread('temp',1)
+		return cv2.imread('temp',1)
+
+	def get_rect(self):
+	 	return win32gui.GetWindowRect(self.handle)
 
 	def finish(self):
 		# Free Resources
@@ -28,4 +34,12 @@ class GGScreen:
 		cDC.DeleteDC()
 		win32gui.ReleaseDC(hwnd, wDC)
 		win32gui.DeleteObject(dataBitMap.GetHandle())
+
+	@staticmethod
+	def get_current_active_window_name():
+		return win32gui.GetWindowText(win32gui.GetForegroundWindow())
+
+w = Window()
+for i in range(1000):
+	w.screenshot()
 
