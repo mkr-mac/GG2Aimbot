@@ -10,30 +10,29 @@ from os.path import isfile, join
 from click import click
 from window import Window
 import time
+import math
 
 PYGAME_DEBUG = False
+LOCAL_SEARCH_RADIUS = 50
 
 pyg_window = None
+
+# Launch a pygame window. 
 if PYGAME_DEBUG:
     os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (800,100)
     pygame.init()
     pyg_window = pygame.display.set_mode([GAME_W,GAME_H])
 
-
+# Load in the list of targets and their names. Only loads REDs for now.
 red = [f for f in listdir("Class_Sprites/RedSig") if isfile(join("Class_Sprites/RedSig", f))]
 targets = []
 names = []
-
 for f in sorted(red)[0:2]:
     load = cv2.imread("Class_Sprites/RedSig/"+f,1)
     targets.append(load)
-    #b,g,r = cv2.split(load) 
-    #targets.append(cv2.merge([r,g,b]))     
     names.append(f)
 
-ptr = 0
-
-# Try to grab TF2 window, first.
+# Wait for the TF2 window to pop up.
 while True:
     name = Window.get_current_active_window_name()
     if 'cp_' in name or 'ctf_' in name:
@@ -41,29 +40,50 @@ while True:
     
 print 'Connected to screen!'
 gg2window = Window()
+gg2window.launch_screenshot_thread()
+
+target_location = None
+target_type_index = 0
 
 while True:
+    # Get latest screencapture
+    capture = gg2window.get_screenshot()
+    # If we do not have a target, we need to search the whole screen to find one.
+    if target_location == None:
+        # For each RED target, compare the template against the screen.
+        for i,target in enumerate(targets):
+            match = cv2.matchTemplate(capture,target,cv2.TM_SQDIFF)
+            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match)
+            # If the squared difference is less than 10 it's probably a match.
+            if (min_val < 10.0):
+                target_location = min_loc
+                target_type_index = i
+                break
+    else:
+        # We found a target! See if it's in the neighborhood and shoot it!
+        # Don't go out of the window, tho.
+        x_search_min = max(0,target_location[0]-LOCAL_SEARCH_RADIUS)
+        x_search_max = min(gg2window.get_rect()[2],target_location[0]+LOCAL_SEARCH_RADIUS)
+        y_search_min = max(0,target_location[1]-LOCAL_SEARCH_RADIUS)
+        y_search_max = min(gg2window.get_rect()[3],target_location[1]+LOCAL_SEARCH_RADIUS)
+        search_area = capture[y_search_min:y_search_max,x_search_min:x_search_max]
+        match = cv2.matchTemplate(search_area,targets[target_type_index],cv2.TM_SQDIFF)
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(match)
 
-    ptr = ptr + 1
-    ptr = ptr % len(targets)
+        if (min_val < 10.0):
+            # The target is here on the screen
+            target_location = [x_search_min + min_loc[0],y_search_min + min_loc[1]]
 
-    # Takes about 0.01s
-    capture = gg2window.screenshot()
+            if  (win32api.GetAsyncKeyState(ord('H')) != 0):
+                click(gg2window.get_rect()[0] + target_location[0] + (targets[target_type_index].shape[1]/2), gg2window.get_rect()[1]+ target_location[1] +(targets[target_type_index].shape[0]/2))
+                win32api.SetCursorPos((target_location[0],target_location[1]-50))
+        else:
+            print "FAIL"
+            target_location = None
+            target_type_index = None
 
-
-    # Takes 0.1 s
-    res = cv2.matchTemplate(capture,targets[ptr],cv2.TM_SQDIFF)
-    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-
-    print min_val
-    #2 mil is a good thresh
-    if (min_val < 10.0) and (win32api.GetAsyncKeyState(ord('H')) != 0):
-        # Shoot it!
-        click(gg2window.get_rect()[0]+min_loc[0]+(targets[ptr].shape[1]/2),gg2window.get_rect()[1]+min_loc[1]+(targets[ptr].shape[0]/2))
-        print names[ptr]
-        print min_val
-        ptr = ptr - 1
-
+    
+     
 
     if PYGAME_DEBUG:
         pygame.event.wait()

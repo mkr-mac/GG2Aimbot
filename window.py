@@ -4,6 +4,7 @@ import win32con
 import numpy
 import struct
 import cv2
+import threading
 
 class Window:
 	# Loads in the active window and prepares it for screenshotting
@@ -20,10 +21,21 @@ class Window:
 		self.dataBitMap.CreateCompatibleBitmap(self.dcObj,self.screen_w,self.screen_h)
 		self.cDC.SelectObject(self.dataBitMap)
 
-	def screenshot(self):
-		self.cDC.BitBlt((0,0), (self.screen_w,self.screen_h), self.dcObj, (0,0), win32con.SRCCOPY)
-		self.dataBitMap.SaveBitmapFile(self.cDC, 'temp.png')
-		return cv2.imread('temp.png',1)
+	def launch_screenshot_thread(self):
+		self.screenshot = None
+		t = threading.Thread(target=self.screenshot_thread)
+		t.start()
+
+	def get_screenshot(self):
+		while self.screenshot == None:
+			pass
+		return self.screenshot
+
+	def screenshot_thread(self):
+		while True:
+			self.cDC.BitBlt((0,0), (self.screen_w,self.screen_h), self.dcObj, (0,0), win32con.SRCCOPY)
+			self.dataBitMap.SaveBitmapFile(self.cDC, 'temp')
+			self.screenshot = cv2.imread('temp',1)
 
 	# X Y W H
 	def get_rect(self):
