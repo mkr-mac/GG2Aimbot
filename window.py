@@ -20,6 +20,7 @@ class Window:
 		self.dataBitMap = win32ui.CreateBitmap()
 		self.dataBitMap.CreateCompatibleBitmap(self.dcObj,self.screen_w,self.screen_h)
 		self.cDC.SelectObject(self.dataBitMap)
+		self.dirty_frame = False
 
 	def launch_screenshot_thread(self):
 		self.screenshot = None
@@ -35,7 +36,16 @@ class Window:
 		while True:
 			self.cDC.BitBlt((0,0), (self.screen_w,self.screen_h), self.dcObj, (0,0), win32con.SRCCOPY)
 			self.dataBitMap.SaveBitmapFile(self.cDC, 'temp')
-			self.screenshot = cv2.imread('temp',1)
+			if self.dirty_frame:
+				continue
+			else:
+				self.screenshot = cv2.imread('temp',1)
+
+	def dirty_frame_start(self):
+		self.dirty_frame = True
+
+	def dirty_frame_end(self):
+		self.dirty_frame = False
 
 	# X Y W H
 	def get_rect(self):

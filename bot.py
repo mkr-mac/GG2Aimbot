@@ -27,7 +27,7 @@ if PYGAME_DEBUG:
 red = [f for f in listdir("Class_Sprites/RedSig") if isfile(join("Class_Sprites/RedSig", f))]
 targets = []
 names = []
-for f in sorted(red)[0:2]:
+for f in sorted(red):
     load = cv2.imread("Class_Sprites/RedSig/"+f,1)
     targets.append(load)
     names.append(f)
@@ -50,6 +50,7 @@ while True:
     capture = gg2window.get_screenshot()
     # If we do not have a target, we need to search the whole screen to find one.
     if target_location == None:
+        print 'Searching...'
         # For each RED target, compare the template against the screen.
         for i,target in enumerate(targets):
             match = cv2.matchTemplate(capture,target,cv2.TM_SQDIFF)
@@ -75,10 +76,17 @@ while True:
             target_location = [x_search_min + min_loc[0],y_search_min + min_loc[1]]
 
             if  (win32api.GetAsyncKeyState(ord('H')) != 0):
+                # When we click, we know that the next screencap will have our mouse position over the target, and so will be invalid. 
+                # As a result, we put the cursor position somewhere else and skip to the next frame
                 click(gg2window.get_rect()[0] + target_location[0] + (targets[target_type_index].shape[1]/2), gg2window.get_rect()[1]+ target_location[1] +(targets[target_type_index].shape[0]/2))
+                gg2window.dirty_frame_start()
                 win32api.SetCursorPos((target_location[0],target_location[1]-50))
+                time.sleep(0.05)
+                gg2window.dirty_frame_end()
+                # now the dirty frame has passed. Give the computer some time to generate a new frame.
+                time.sleep(0.05)
+
         else:
-            print "FAIL"
             target_location = None
             target_type_index = None
 
