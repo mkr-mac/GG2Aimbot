@@ -8,6 +8,7 @@ import win32api, win32con, time
 from os import listdir
 from os.path import isfile, join
 from click import click
+from clear_path import clear_path
 from window import Window
 import time
 import math
@@ -76,15 +77,16 @@ while True:
             target_location = [x_search_min + min_loc[0],y_search_min + min_loc[1]]
 
             if  (win32api.GetAsyncKeyState(ord('H')) != 0):
-                # When we click, we know that the next screencap will have our mouse position over the target, and so will be invalid. 
-                # As a result, we put the cursor position somewhere else and skip to the next frame
-                click(gg2window.get_rect()[0] + target_location[0] + (targets[target_type_index].shape[1]/2), gg2window.get_rect()[1]+ target_location[1] +(targets[target_type_index].shape[0]/2))
-                gg2window.dirty_frame_start()
-                win32api.SetCursorPos((target_location[0],target_location[1]-50))
-                time.sleep(0.05)
-                gg2window.dirty_frame_end()
-                # now the dirty frame has passed. Give the computer some time to generate a new frame.
-                time.sleep(0.05)
+				if (clear_path(gg2window.get_rect()[0]+(gg2window.get_rect()[2])/2,gg2window.get_rect()[1]+(gg2window.get_rect()[3])/2,gg2window.get_rect()[0] + target_location[0] + (targets[target_type_index].shape[1]/2), gg2window.get_rect()[1]+ target_location[1] +(targets[target_type_index].shape[0]/2), capture)):
+					# When we click, we know that the next screencap will have our mouse position over the target, and so will be invalid. 
+					# As a result, we put the cursor position somewhere else and skip to the next frame
+					click(gg2window.get_rect()[0] + target_location[0] + (targets[target_type_index].shape[1]/2), gg2window.get_rect()[1]+ target_location[1] +(targets[target_type_index].shape[0]/2))
+					gg2window.dirty_frame_start()
+					win32api.SetCursorPos((target_location[0],target_location[1]-50))
+					time.sleep(0.05)
+					gg2window.dirty_frame_end()
+					# now the dirty frame has passed. Give the computer some time to generate a new frame.
+					time.sleep(0.05)
 
         else:
             target_location = None
