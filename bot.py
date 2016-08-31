@@ -35,7 +35,7 @@ for f in sorted(red):
 # Wait for the TF2 window to pop up.
 while True:
     name = Window.get_current_active_window_name()
-    if 'cp_' in name or 'ctf_' in name:
+    if 'cp_' in name or 'ctf_' in name or 'arena_' in name or 'koth_' in name:
         break 
     
 print 'Connected to screen!'
