@@ -25,6 +25,7 @@ class Window:
 	def launch_screenshot_thread(self):
 		self.screenshot = None
 		t = threading.Thread(target=self.screenshot_thread)
+		t.daemon = True
 		t.start()
 
 	def get_screenshot(self):
